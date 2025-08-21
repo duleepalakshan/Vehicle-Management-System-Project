@@ -9,10 +9,12 @@ import { Module } from '@nestjs/common';
     imports: [
       TypeOrmModule.forFeature([Vehicle]),
       BullModule.registerQueue({
-        name: 'vehicle',
+        name: 'vehicle-queue',
       }),
     ],
     providers: [VehicleService, VehicleResolver],
-    exports: [VehicleQueue],
+    exports: [VehicleService,
+              BullModule,
+    ],
   })
   export class VehicleModule {}

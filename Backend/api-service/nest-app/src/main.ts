@@ -1,18 +1,17 @@
 import { NestFactory } from '@nestjs/core';
-  import { AppModule } from './app.module';
-  import { IoAdapter } from '@nestjs/platform-socket.io';
-  import { NotificationGateway } from './notification/notification.gateway';
-  import { NestExpressApplication } from '@nestjs/platform-express';
-  import * as dotenv from 'dotenv';
+import { AppModule } from './app.module';
 
-  
-  dotenv.config(); // Load environment variables (even if .env file not present)
-  
-  async function bootstrap() {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule);
-    app.useWebSocketAdapter(new IoAdapter(app));
-     const port = process.env.PORT || 3002
-     await app.listen(port);
-    console.log('Application is running on: http://localhost:3002');
-  }
-  bootstrap();
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // --- ENABLE CORS HERE ---
+  app.enableCors({
+    origin: 'http://localhost:3001', // Allow requests from your frontend
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
+  // -------------------------
+
+  await app.listen(3002);
+}
+bootstrap();

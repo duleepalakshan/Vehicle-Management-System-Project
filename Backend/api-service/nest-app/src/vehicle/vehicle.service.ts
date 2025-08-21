@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Vehicle } from './vehicle.entity';
 import { ILike } from 'typeorm';
+
 
 
 //GraphQL Crud
@@ -19,19 +20,43 @@ export class VehicleService {
 
   // Create
   async createVehicle(data: Partial<Vehicle>): Promise<Vehicle> {
-    data.age_of_vehicle = this.calculateAge(data.manufactured_date);
+  if (data.manufactured_date) {
+  data.age_of_vehicle = this.calculateAge(data.manufactured_date);
+}
     const newVehicle = this.vehicleRepo.create(data);
     return this.vehicleRepo.save(newVehicle);
   }
 
   // Update
   async updateVehicle(id: string, data: Partial<Vehicle>): Promise<Vehicle> {
-    if (data.manufactured_date) {
-      data.age_of_vehicle = this.calculateAge(data.manufactured_date);
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new NotFoundException(`Invalid ID format: "${id}"`);
     }
-    await this.vehicleRepo.update(id, data);
-    return this.vehicleRepo.findOneBy({ id });
+
+    const vehicleToUpdate = await this.vehicleRepo.findOneBy({ id: numericId });
+    if (!vehicleToUpdate) {
+      throw new NotFoundException(`Vehicle with ID "${id}" not found`);
+    }
+
+    if (data.manufactured_date) {
+      data.age_of_vehicle = this.calculateAge(new Date(data.manufactured_date));
+    }
+    
+    await this.vehicleRepo.update(numericId, data);
+
+    
+    const updatedVehicle = await this.vehicleRepo.findOneBy({ id: numericId });
+    if (!updatedVehicle) {
+
+      throw new NotFoundException(`Vehicle with ID "${id}" disappeared after update.`);
+    }
+    return updatedVehicle;
   }
+
+    
+
+   
 
   // Delete
   async deleteVehicle(id: string): Promise<boolean> {
